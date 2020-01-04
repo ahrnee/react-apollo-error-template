@@ -1,0 +1,7 @@
+{
+    "yaml.format.printWidth": 160,
+    "html.format.wrapLineLength": 160,
+    "prettier.printWidth": 160,
+    "editor.defaultFormatter": "vscode.html-language-features",
+    "editor.formatOnSave": true
+}
