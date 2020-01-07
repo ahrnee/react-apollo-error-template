@@ -10,9 +10,9 @@ import "./index.css";
 const resolvers = {
   Person: {
     clientObject: (person, args, context, info) => {
-      // console.log("in person resolver", person);
+      console.log("in person resolver", person);
       if (!person.clientObject) {
-        console.log(`Generating person.clientObject for person: ${person.name}`);
+        console.log(`Resolvers - generating person.clientObject for person: ${person.name}`);
         return { clientTime: new Date().toLocaleTimeString() };
       }
       return person.clientObject;
@@ -20,10 +20,29 @@ const resolvers = {
   }
 };
 
+const typePolicies = {
+  Person: {
+    fields: {
+      name: (co, { readField }) => {
+        console.log("*** in person.name typePolicies", co);
+        return co;
+      },
+      clientObject: (co, param2) => {
+        console.log("*** in person.clientObject typePolicies", co, param2);
+        if (!co) {
+          //console.log(`**** TypePolicies - generating person.clientObject for person: ${readField('name')}`);
+          return { clientTime: new Date().toLocaleTimeString() };
+        }
+        return co;
+      }
+    }
+  }
+};
+
 const client = new ApolloClient({
-  cache: new InMemoryCache(),
+  cache: new InMemoryCache({ typePolicies }),
   link,
-  resolvers
+  resolvers,
 });
 
 render(
