@@ -6,7 +6,7 @@ const PERSON_FRAGMENT = gql`
     id
     name
     serverTime
-    clientObject @client(always: true)
+    #clientObject @client(always: true)
   }
 `;
 
@@ -49,7 +49,7 @@ export default function App({ client }) {
       setPeople(result.data.people);
       addCacheSnapshotToLog(`fetch (${fetchPolicy})`);
     });
-    setUserMessage(`ALL_EOPLE fetch (${fetchPolicy}) executed`);
+    setUserMessage(`ALL_PEOPLE fetch (${fetchPolicy}) executed`);
   };
 
   //
@@ -100,17 +100,17 @@ export default function App({ client }) {
         <ul>
           {people.map(personItem => (
             <li key={personItem.id}>
-              {personItem.name} ( <span style={{ color: "blue" }}>Server Time: <b>{personItem.serverTime}</b></span>, <span style={{ color: "green" }}>Client Time: <b>{personItem.clientObject.clientTime}</b></span> )
+              {personItem.name} ( <span style={{ color: "blue" }}>Server Time: <b>{personItem.serverTime}</b></span>, <span style={{ color: "green" }}>Client Time: <b>{/* personItem.clientObject.clientTime */}</b></span> )
             </li>
           ))}
         </ul>
       )}
 
       <h3>Person</h3>
-      {!person ? (<p>No Person Loaded</p>) : (
+      {!person || !person.id ? (<p>No Person Loaded</p>) : (
         <ul>
           <li key={person.id}>
-            {person.name} ( <span style={{ color: "blue" }}>Server Time: <b>{person.serverTime}</b></span>, <span style={{ color: "green" }}>Client Time: <b>{person.clientObject.clientTime}</b></span> )
+            {person.name} ( <span style={{ color: "blue" }}>Server Time: <b>{person.serverTime}</b></span>, <span style={{ color: "green" }}>Client Time: <b>{/* person.clientObject.clientTime */}</b></span> )
             </li>
         </ul>
       )}
