@@ -6,7 +6,6 @@ const PERSON_FRAGMENT = gql`
     id
     name
     serverTime
-    #clientObject @client(always: true)
   }
 `;
 
@@ -35,13 +34,6 @@ export default function App({ client }) {
   const [showCacheLog, setShowCacheLog] = useState(false);
   const [showIssueNotes, setShowIssueNotes] = useState(false);
   const [userMessage, setUserMessage] = useState(null);
-
-  //
-  const evitFieldFromCache = (key, field) => {
-    client.cache.evict(key, field);
-    addCacheSnapshotToLog(`after ${key} ${field} evict`);
-    setUserMessage(`${key} ${field} evicted`);
-  };
 
   //
   const fetchPeople = (fetchPolicy = "cache-first") => {
@@ -100,7 +92,7 @@ export default function App({ client }) {
         <ul>
           {people.map(personItem => (
             <li key={personItem.id}>
-              {personItem.name} ( <span style={{ color: "blue" }}>Server Time: <b>{personItem.serverTime}</b></span>, <span style={{ color: "green" }}>Client Time: <b>{/* personItem.clientObject.clientTime */}</b></span> )
+              {personItem.name} ( <span style={{ color: "blue" }}>Server Time: <b>{personItem.serverTime}</b></span>, <span style={{ color: "green" }}></span> )
             </li>
           ))}
         </ul>
@@ -110,7 +102,7 @@ export default function App({ client }) {
       {!person || !person.id ? (<p>No Person Loaded</p>) : (
         <ul>
           <li key={person.id}>
-            {person.name} ( <span style={{ color: "blue" }}>Server Time: <b>{person.serverTime}</b></span>, <span style={{ color: "green" }}>Client Time: <b>{/* person.clientObject.clientTime */}</b></span> )
+            {person.name} ( <span style={{ color: "blue" }}>Server Time: <b>{person.serverTime}</b></span>, <span style={{ color: "green" }}></span> )
             </li>
         </ul>
       )}
@@ -120,18 +112,10 @@ export default function App({ client }) {
       <h3>Actions</h3>
       <div>
         <div style={{ padding: 5 }}>
-          <button onClick={() => fetchOnePerson(1, "cache-first")}>2. Run ONE_PERSON Query (cache-first)</button>
+          <button onClick={() => fetchOnePerson(1, "cache-first")}>Run ONE_PERSON Query (cache-first)</button>
         </div>
         <div style={{ padding: 5 }}>
-          <button onClick={() => { evitFieldFromCache("Person:2", "clientObject"); }}          >
-            1. Evict clientObject field on Person 2
-          </button>
-        </div>
-        <div style={{ padding: 5 }}>
-          <button onClick={() => fetchPeople("cache-first")}>2. Run ALL_PEOPLE Query (cache-first)</button>
-        </div>
-        <div style={{ padding: 5 }}>
-          <button onClick={() => fetchPeople("cache-only")}>3. Run ALL_PEOPLE Query (cache-only)</button>
+          <button onClick={() => fetchPeople("cache-first")}>Run ALL_PEOPLE Query (cache-first)</button>
         </div>
       </div>
     </main>
