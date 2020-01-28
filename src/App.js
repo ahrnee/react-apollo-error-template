@@ -6,6 +6,7 @@ const PERSON_FRAGMENT = gql`
     id
     name
     serverTime
+    clientObject @client(always: true)
   }
 `;
 
@@ -92,7 +93,7 @@ export default function App({ client }) {
         <ul>
           {people.map(personItem => (
             <li key={personItem.id}>
-              {personItem.name} ( <span style={{ color: "blue" }}>Server Time: <b>{personItem.serverTime}</b></span>, <span style={{ color: "green" }}></span> )
+              {personItem.name} ( <span style={{ color: "blue" }}>Server Time: <b>{personItem.serverTime}</b></span>, <span style={{ color: "green" }}>Client Time: <b>{personItem.clientObject.clientTime}</b></span> )
             </li>
           ))}
         </ul>
@@ -102,7 +103,7 @@ export default function App({ client }) {
       {!person || !person.id ? (<p>No Person Loaded</p>) : (
         <ul>
           <li key={person.id}>
-            {person.name} ( <span style={{ color: "blue" }}>Server Time: <b>{person.serverTime}</b></span>, <span style={{ color: "green" }}></span> )
+            {person.name} ( <span style={{ color: "blue" }}>Server Time: <b>{person.serverTime}</b></span>, <span style={{ color: "green" }}>Client Time: <b>{person.clientObject.clientTime}</b></span> )
             </li>
         </ul>
       )}

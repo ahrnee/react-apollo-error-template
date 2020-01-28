@@ -7,6 +7,19 @@ import App from "./App";
 
 import "./index.css";
 
+const resolvers = {
+  Person: {
+    clientObject: (person, args, context, info) => {
+      // console.log("in person resolver", person);
+      if (!person.clientObject) {
+        console.log(`Generating person.clientObject for person: ${person.name}`);
+        return { clientTime: new Date().toLocaleTimeString() };
+      }
+      return person.clientObject;
+    }
+  }
+};
+
 const typePolicies = {
   Query: {
     fields: {
@@ -24,6 +37,7 @@ const typePolicies = {
 const client = new ApolloClient({
   cache: new InMemoryCache({ typePolicies }),
   link,
+  resolvers
 });
 
 render(
