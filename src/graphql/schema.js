@@ -24,6 +24,18 @@ const QueryType = new GraphQLObjectType({
         peopleData.map(person => {
           return { ...person, serverTime: new Date().toLocaleTimeString() };
         })
+    },
+    person: {
+      type: PersonType,
+      resolve(_parent, args) {
+        return args.id && peopleData.find(
+          p => String(p.id) === String(args.id));
+      },
+      args: {
+        id: {
+          type: GraphQLID,
+        },
+      }
     }
   }
 });

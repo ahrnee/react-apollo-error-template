@@ -20,8 +20,22 @@ const resolvers = {
   }
 };
 
+const typePolicies = {
+  Query: {
+    fields: {
+      person: {
+        keyArgs: ["id"],
+        read(existingData, { args, toReference }) {
+          console.log(`--> typePolicy for person id: ${args.id}`);
+          return existingData || toReference({ __typename: 'Person', id: args.id });
+        },
+      }
+    },
+  },
+};
+
 const client = new ApolloClient({
-  cache: new InMemoryCache(),
+  cache: new InMemoryCache({ typePolicies }),
   link,
   resolvers
 });
