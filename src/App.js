@@ -7,7 +7,7 @@ const PERSON_FRAGMENT = gql`
     id
     name
     serverTime
-    clientObject @client(always: true)
+    #clientObject @client(always: true)
   }
 `;
 
@@ -38,21 +38,38 @@ export default function App({ client }) {
 
   //
   const fetchPeople = (fetchPolicy = "cache-first") => {
-    client.query({ query: ALL_PEOPLE, fetchPolicy }).then(result => {
+    setUserMessage(`ALL_PEOPLE fetch (${fetchPolicy}) executing`);
+    return client.query({ query: ALL_PEOPLE, fetchPolicy }).then(result => {
       setPeople(result.data.people);
       addCacheSnapshotToLog(`fetch (${fetchPolicy})`);
+      return result.data.people;
     });
-    setUserMessage(`ALL_PEOPLE fetch (${fetchPolicy}) executed`);
   };
 
   //
   const fetchOnePerson = (id, fetchPolicy = "cache-first") => {
+    setUserMessage(`ONE_PERSON fetch (${fetchPolicy}) executing`);
     client.query({ query: ONE_PERSON, variables: { id }, fetchPolicy }).then(result => {
       setPerson(result.data.person);
       addCacheSnapshotToLog(`fetch (${fetchPolicy})`);
+      return result.data.person;
     });
-    setUserMessage(`ONE_PERSON fetch (${fetchPolicy}) executed`);
   };
+
+  //
+  const createNewPersonQuery = () => {
+    fetchPeople().then((people) => {
+      const newData = { people: [...people, { __typename: 'Person', id: `${people.length + 1}`, name: `New Person ${people.length + 1}`, serverTime: new Date().toLocaleTimeString() }] };
+      console.log('writeQuery. newData', newData);
+      client.writeQuery({ query: ALL_PEOPLE, data: newData, });
+    })
+  }
+
+  //
+  const createNewPersonFragment = ({ id, name }) => {
+    console.log('writeFragment');
+    client.writeFragment({ fragment: PERSON_FRAGMENT, id: id.toString(), data: { __typename: 'Person', name, serverTime: new Date().toLocaleTimeString() } });
+  }
 
   return (
     <main>
@@ -81,7 +98,7 @@ export default function App({ client }) {
         <ul>
           {people.map(personItem => (
             <li key={personItem.id}>
-              {personItem.name} ( <span style={{ color: "blue" }}>Server Time: <b>{personItem.serverTime}</b></span>, <span style={{ color: "green" }}>Client Time: <b>{personItem.clientObject.clientTime}</b></span> )
+              {personItem.name} ( <span style={{ color: "blue" }}>Server Time: <b>{personItem.serverTime}</b></span> )
             </li>
           ))}
         </ul>
@@ -91,7 +108,7 @@ export default function App({ client }) {
       {!person || !person.id ? (<p>No Person Loaded</p>) : (
         <ul>
           <li key={person.id}>
-            {person.name} ( <span style={{ color: "blue" }}>Server Time: <b>{person.serverTime}</b></span>, <span style={{ color: "green" }}>Client Time: <b>{person.clientObject.clientTime}</b></span> )
+            {person.name} ( <span style={{ color: "blue" }}>Server Time: <b>{person.serverTime}</b></span>)
             </li>
         </ul>
       )}
@@ -105,6 +122,12 @@ export default function App({ client }) {
         </div>
         <div style={{ padding: 5 }}>
           <button onClick={() => fetchPeople("cache-first")}>Run ALL_PEOPLE Query (cache-first)</button>
+        </div>
+        <div style={{ padding: 5 }}>
+          <button onClick={() => createNewPersonFragment({ id: Math.random(), name: `New Person ${Math.random()}` })}>Create New Person Fragment</button>
+        </div>
+        <div style={{ padding: 5 }}>
+          <button onClick={() => createNewPersonQuery()}>Create New Person Query</button>
         </div>
       </div>
     </main>
