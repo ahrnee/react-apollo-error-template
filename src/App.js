@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { gql, useQuery } from "@apollo/client";
+import { useCacheSnapshots } from "./helpers/useCacheSnapshots";
 
 const PERSON_FRAGMENT = gql`
   fragment PersonFragment on Person {
@@ -31,10 +32,9 @@ const ONE_PERSON = gql`
 export default function App({ client }) {
   const [people, setPeople] = useState(null);
   const [person, setPerson] = useState(null);
-  const [cacheLog, setCacheLog] = useState({ snapshots: [] });
-  const [showCacheLog, setShowCacheLog] = useState(false);
   const [showIssueNotes, setShowIssueNotes] = useState(false);
   const [userMessage, setUserMessage] = useState(null);
+  const { methods: { addCacheSnapshotToLog }, components: { SnapshotLogViewer } } = useCacheSnapshots({ client });
 
   //
   const fetchPeople = (fetchPolicy = "cache-first") => {
@@ -52,18 +52,6 @@ export default function App({ client }) {
       addCacheSnapshotToLog(`fetch (${fetchPolicy})`);
     });
     setUserMessage(`ONE_PERSON fetch (${fetchPolicy}) executed`);
-  };
-
-  //
-  const addCacheSnapshotToLog = message => {
-    const cacheDisplayItem = {
-      message,
-      snapshotTime: new Date().toLocaleTimeString(),
-      cacheContents: client.cache.extract(),
-      delimiter: "-------------------------------------------"
-    };
-
-    setCacheLog({ ...cacheLog, snapshots: [cacheDisplayItem, ...cacheLog.snapshots] });
   };
 
   return (
@@ -108,8 +96,8 @@ export default function App({ client }) {
         </ul>
       )}
 
-      <h3> Cache Snapshots Log (<a onClick={e => { e.preventDefault(); setShowCacheLog(!showCacheLog); }} href="#">Toggle Display</a>)</h3>
-      {showCacheLog && <pre style={{ border: "solid 1px #888", width: 500, height: 200, overflowY: "scroll" }}>{JSON.stringify(cacheLog, null, 2)}</pre>}
+      <SnapshotLogViewer />
+
       <h3>Actions</h3>
       <div>
         <div style={{ padding: 5 }}>
