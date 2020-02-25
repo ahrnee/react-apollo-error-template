@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { gql, useQuery } from "@apollo/client";
 import { useCacheSnapshots } from "./helpers/useCacheSnapshots";
 
@@ -20,17 +20,16 @@ const ALL_PEOPLE = gql`
 `;
 
 export default function App({ client }) {
-  const [people, setPeople] = useState(null);
   const [showIssueNotes, setShowIssueNotes] = useState(false);
-  const [userMessage, setUserMessage] = useState(null);
   const { methods: { addCacheSnapshotToLog }, components: { SnapshotLogViewer } } = useCacheSnapshots({ client });
+  const { loading, data } = useQuery(ALL_PEOPLE);
+
+  const nextUserIdRef = useRef();
+  useEffect(() => { nextUserIdRef.current = 4; }, []);
 
   //
-  const fetchPeople = (fetchPolicy = "cache-first") => {
-    setUserMessage(`ALL_PEOPLE fetch (${fetchPolicy}) executing`);
+  const fetchPeople = (fetchPolicy = "cache-only") => {
     return client.query({ query: ALL_PEOPLE, fetchPolicy }).then(result => {
-      setPeople(result.data.people);
-      addCacheSnapshotToLog(`fetch (${fetchPolicy})`);
       return result.data.people;
     });
   };
@@ -38,25 +37,23 @@ export default function App({ client }) {
   //
   const createNewPersonQuery = () => {
     fetchPeople().then((people) => {
-      const newData = { people: [...people, { __typename: 'Person', id: `${people.length + 1}`, name: `New Person ${people.length + 1}`, serverTime: new Date().toLocaleTimeString() }] };
+      const newData = { people: [...people, { __typename: 'Person', id: `${nextUserIdRef.current}`, name: `New Person ${nextUserIdRef.current}`, serverTime: new Date().toLocaleTimeString() }] };
+      nextUserIdRef.current += 1;
       console.log('writeQuery. newData', newData);
       client.writeQuery({ query: ALL_PEOPLE, data: newData, });
+      addCacheSnapshotToLog(`createNewPersonQuery`);
     })
   }
 
   //
   const createNewPersonWithMissingFieldQuery = () => {
     fetchPeople().then((people) => {
-      const newData = { people: [...people, { __typename: 'Person', id: `${people.length + 1}`, name: `New Person ${people.length + 1}`, serverTime: new Date().toLocaleTimeString() }] };
+      const newData = { people: [...people, { __typename: 'Person', id: `${nextUserIdRef.current}`, name: `New Person ${nextUserIdRef.current}` }] };
+      nextUserIdRef.current += 1;
       console.log('writeQuery. newData', newData);
       client.writeQuery({ query: ALL_PEOPLE, data: newData, });
+      addCacheSnapshotToLog(`createNewPersonWithMissingFieldQuery`);
     })
-  }
-
-  //
-  const createNewPersonFragment = ({ id, name }) => {
-    console.log('writeFragment');
-    client.writeFragment({ fragment: PERSON_FRAGMENT, id: id.toString(), data: { __typename: 'Person', name, serverTime: new Date().toLocaleTimeString() } });
   }
 
   return (
@@ -78,13 +75,11 @@ export default function App({ client }) {
       {showIssueNotes && <IssueNotes />}
       <hr />
       <h2>Demo</h2>
-      <h3>Messages</h3>
-      {userMessage ? <div>{userMessage}</div> : <div>No Messages</div>}
 
-      <h3>Names</h3>
-      {!people ? (<p>No People Loaded</p>) : (
+      <h3>Users</h3>
+      {!data || !data.people ? (<p>No People Loaded</p>) : (
         <ul>
-          {people.map(personItem => (
+          {data.people.map(personItem => (
             <li key={personItem.id}>
               {personItem.name} ( <span style={{ color: "blue" }}>Server Time: <b>{personItem.serverTime}</b></span> )
             </li>
@@ -111,16 +106,26 @@ function IssueNotes() {
   return (
     <>
       <h3>Expected Behavior</h3>
-      TBD
+      If data missing from an object in query results:
+       <ul>
+        <li>The query continues to return the objects that have all the expected fields</li>
+        <li>An error or warning for the omitted objects with the missing fields</li>
+      </ul>
       <h3>Actual Behavior</h3>
-      TBD
-      <h3>Reproduction Steps</h3>
+      <ul>
+        <li>As soon as a results object has a missing field, the entire query stops updating</li>
+        <li>No error or warning seems to be available indicating the missing fields</li>
+      </ul>
+      < h3 > Reproduction Steps</h3 >
       <ol>
-        <li>TBD.</li>
+        <li>Click "Create New Person (all fields)" button - observe the results updating</li>
+        <li>Click "Create New Person (missing field)" button - observe the results do not update</li>
+        <li>Click "Create New Person (all fields)" button - observe the results no longer update</li>
+        <li>Click "Toggle Display" link - observe the cache continue to be updated with the results, even though the query not longer seems to update</li>
       </ol>
       <h3>Notes</h3>
       <p>
-        TBD
+        Debugging queries that are not working due to to missing fields is the single most frequent (and time-consuming) issue I run into with AC3. Anything that can make that experience better would be a big help
       </p>
     </>
   );
