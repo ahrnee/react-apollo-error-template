@@ -7,7 +7,6 @@ const PERSON_FRAGMENT = gql`
     id
     name
     serverTime
-    #clientObject @client(always: true)
   }
 `;
 
@@ -20,18 +19,8 @@ const ALL_PEOPLE = gql`
   ${PERSON_FRAGMENT}
 `;
 
-const ONE_PERSON = gql`
-  query OnePerson($id: ID) {
-    person(id: $id) {
-      ...PersonFragment
-    }
-  }
-  ${PERSON_FRAGMENT}
-`;
-
 export default function App({ client }) {
   const [people, setPeople] = useState(null);
-  const [person, setPerson] = useState(null);
   const [showIssueNotes, setShowIssueNotes] = useState(false);
   const [userMessage, setUserMessage] = useState(null);
   const { methods: { addCacheSnapshotToLog }, components: { SnapshotLogViewer } } = useCacheSnapshots({ client });
@@ -47,17 +36,16 @@ export default function App({ client }) {
   };
 
   //
-  const fetchOnePerson = (id, fetchPolicy = "cache-first") => {
-    setUserMessage(`ONE_PERSON fetch (${fetchPolicy}) executing`);
-    client.query({ query: ONE_PERSON, variables: { id }, fetchPolicy }).then(result => {
-      setPerson(result.data.person);
-      addCacheSnapshotToLog(`fetch (${fetchPolicy})`);
-      return result.data.person;
-    });
-  };
+  const createNewPersonQuery = () => {
+    fetchPeople().then((people) => {
+      const newData = { people: [...people, { __typename: 'Person', id: `${people.length + 1}`, name: `New Person ${people.length + 1}`, serverTime: new Date().toLocaleTimeString() }] };
+      console.log('writeQuery. newData', newData);
+      client.writeQuery({ query: ALL_PEOPLE, data: newData, });
+    })
+  }
 
   //
-  const createNewPersonQuery = () => {
+  const createNewPersonWithMissingFieldQuery = () => {
     fetchPeople().then((people) => {
       const newData = { people: [...people, { __typename: 'Person', id: `${people.length + 1}`, name: `New Person ${people.length + 1}`, serverTime: new Date().toLocaleTimeString() }] };
       console.log('writeQuery. newData', newData);
@@ -104,30 +92,15 @@ export default function App({ client }) {
         </ul>
       )}
 
-      <h3>Person</h3>
-      {!person || !person.id ? (<p>No Person Loaded</p>) : (
-        <ul>
-          <li key={person.id}>
-            {person.name} ( <span style={{ color: "blue" }}>Server Time: <b>{person.serverTime}</b></span>)
-            </li>
-        </ul>
-      )}
-
       <SnapshotLogViewer />
 
       <h3>Actions</h3>
       <div>
         <div style={{ padding: 5 }}>
-          <button onClick={() => fetchOnePerson(1, "cache-first")}>Run ONE_PERSON Query (cache-first)</button>
+          <button onClick={() => createNewPersonQuery()}>Create New Person (all fields)</button>
         </div>
         <div style={{ padding: 5 }}>
-          <button onClick={() => fetchPeople("cache-first")}>Run ALL_PEOPLE Query (cache-first)</button>
-        </div>
-        <div style={{ padding: 5 }}>
-          <button onClick={() => createNewPersonFragment({ id: Math.random(), name: `New Person ${Math.random()}` })}>Create New Person Fragment</button>
-        </div>
-        <div style={{ padding: 5 }}>
-          <button onClick={() => createNewPersonQuery()}>Create New Person Query</button>
+          <button onClick={() => createNewPersonWithMissingFieldQuery()}>Create New Person (missing field)</button>
         </div>
       </div>
     </main>
