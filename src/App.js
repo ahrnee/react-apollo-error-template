@@ -129,7 +129,13 @@ export default function App({ client }) {
           <button onClick={() => fetchOnePerson(1, "cache-first")}>Run ONE_PERSON (id:1) Query (cache-first)</button>
         </div>
         <div style={{ padding: 5 }}>
+          <button onClick={() => fetchOnePerson(1, "cache-only")}>Run ONE_PERSON (id:1) Query (cache-only)</button>
+        </div>
+        <div style={{ padding: 5 }}>
           <button onClick={() => fetchPeople("cache-first")}>Run ALL_PEOPLE Query (cache-first)</button>
+        </div>
+        <div style={{ padding: 5 }}>
+          <button onClick={() => fetchPeople("cache-only")}>Run ALL_PEOPLE Query (cache-only)</button>
         </div>
         <div style={{ padding: 5 }}>
           <button onClick={() => createNewPersonFragment({ id: Math.random(), name: `New Person ${Math.random()}` })}>Create New Person Fragment</button>
