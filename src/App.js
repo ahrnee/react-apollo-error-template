@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { gql, useQuery } from "@apollo/client";
+import { gql, useQuery, defaultDataIdFromObject } from "@apollo/client";
 import { useCacheSnapshots } from "./helpers/useCacheSnapshots";
 
 const PERSON_FRAGMENT = gql`
@@ -56,6 +56,14 @@ export default function App({ client }) {
     });
   };
 
+  const evictOnePerson = (id => {
+    const evictId = defaultDataIdFromObject({ __typename: 'Person', id });
+    setUserMessage(`evict: ${evictId} - executing`);
+    client.cache.evict(evictId);
+    client.cache.gc();
+    addCacheSnapshotToLog(`evictOnePerson (${evictId})`);
+  });
+
   //
   const createNewPersonQuery = () => {
     fetchPeople().then((people) => {
@@ -68,7 +76,7 @@ export default function App({ client }) {
   //
   const createNewPersonFragment = ({ id, name }) => {
     console.log('writeFragment');
-    client.writeFragment({ fragment: PERSON_FRAGMENT, id: id.toString(), data: { __typename: 'Person', name, serverTime: new Date().toLocaleTimeString() } });
+    client.writeFragment({ fragment: PERSON_FRAGMENT, id: defaultDataIdFromObject({ __typename: 'Person', id }), data: { __typename: 'Person', id, name, serverTime: new Date().toLocaleTimeString() } });
   }
 
   return (
@@ -118,7 +126,7 @@ export default function App({ client }) {
       <h3>Actions</h3>
       <div>
         <div style={{ padding: 5 }}>
-          <button onClick={() => fetchOnePerson(1, "cache-first")}>Run ONE_PERSON Query (cache-first)</button>
+          <button onClick={() => fetchOnePerson(1, "cache-first")}>Run ONE_PERSON (id:1) Query (cache-first)</button>
         </div>
         <div style={{ padding: 5 }}>
           <button onClick={() => fetchPeople("cache-first")}>Run ALL_PEOPLE Query (cache-first)</button>
@@ -128,6 +136,9 @@ export default function App({ client }) {
         </div>
         <div style={{ padding: 5 }}>
           <button onClick={() => createNewPersonQuery()}>Create New Person Query</button>
+        </div>
+        <div style={{ padding: 5 }}>
+          <button onClick={() => evictOnePerson(1)}>Evict on person (id:1)</button>
         </div>
       </div>
     </main>
