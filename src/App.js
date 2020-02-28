@@ -144,7 +144,7 @@ export default function App({ client }) {
           <button onClick={() => createNewPersonQuery()}>Create New Person Query</button>
         </div>
         <div style={{ padding: 5 }}>
-          <button onClick={() => evictOnePerson(1)}>Evict on person (id:1)</button>
+          <button onClick={() => evictOnePerson(1)}>Evict one person (id:1)</button>
         </div>
       </div>
     </main>
@@ -154,17 +154,28 @@ export default function App({ client }) {
 function IssueNotes() {
   return (
     <>
-      <h3>Expected Behavior</h3>
-      TBD
+      <h3>Suggested Behavior</h3>
+      When an object is evicted from cache:
+      <ul>
+        <li>It is cleared from referenced queries</li>
+        <li>It disappears from the Apollo DevTools cache</li>
+      </ul>
       <h3>Actual Behavior</h3>
-      TBD
+      When an object is evicted from cache:
+      <ul>
+        <li>It is not from referenced queries</li>
+        <li>It does not disappear from the Apollo DevTools cache</li>
+      </ul>
       <h3>Reproduction Steps</h3>
       <ol>
-        <li>TBD.</li>
+        <li>click button: ALL_PEOPLE fetch (cache-first)</li>
+        <li>click button: Evict one person (id:1)</li>
+        <li>click link: Toggle Display</li>
+        <li>Observe that the person:1 item is no longer in cache BUT: a) is in the query references still, b) still shows up in the Apollo DevTools cache list</li>
       </ol>
       <h3>Notes</h3>
       <p>
-        TBD
+        N/A
       </p>
     </>
   );
