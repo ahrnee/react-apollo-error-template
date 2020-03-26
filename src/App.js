@@ -47,6 +47,17 @@ export default function App({ client }) {
   };
 
   //
+  const fetchPeopleFromClientCache = () => {
+    const peopleResult = client.readQuery({ query: ALL_PEOPLE });
+    if (peopleResult) {
+      const { people } = peopleResult;
+      console.log(people);
+      setPeople(people);
+      addCacheSnapshotToLog(`fetchPeopleFromClientCache`);
+    }
+  };
+
+  //
   const fetchOnePerson = (id, fetchPolicy = "cache-first") => {
     setUserMessage(`ONE_PERSON fetch (${fetchPolicy}) executing`);
     client.query({ query: ONE_PERSON, variables: { id }, fetchPolicy }).then(result => {
@@ -126,19 +137,25 @@ export default function App({ client }) {
       <h3>Actions</h3>
       <div>
         <div style={{ padding: 5 }}>
-          <button onClick={() => fetchOnePerson(1, "cache-first")}>Run ONE_PERSON (id:1) Query (cache-first)</button>
+          <button onClick={() => fetchOnePerson(1, "cache-first")}>1. Run ONE_PERSON (id:1) Query (cache-first)</button>
         </div>
         <div style={{ padding: 5 }}>
-          <button onClick={() => fetchPeople("cache-first")}>Run ALL_PEOPLE Query (cache-first)</button>
+          <button onClick={() => fetchPeople("cache-first")}>2. Run ALL_PEOPLE Query (cache-first)</button>
         </div>
         <div style={{ padding: 5 }}>
-          <button onClick={() => createNewPersonFragment({ id: Math.random(), name: `New Person ${Math.random()}` })}>Create New Person Fragment</button>
+          <button onClick={() => fetchPeople("cache-only")}>3. Run ALL_PEOPLE Query (cache-only)</button>
         </div>
         <div style={{ padding: 5 }}>
-          <button onClick={() => createNewPersonQuery()}>Create New Person Query</button>
+          <button onClick={() => fetchPeopleFromClientCache("cache-first")}>4. Fetch People from InMemory Cache</button>
         </div>
         <div style={{ padding: 5 }}>
-          <button onClick={() => evictOnePerson(1)}>Evict on person (id:1)</button>
+          <button onClick={() => createNewPersonFragment({ id: Math.random(), name: `New Person ${Math.random()}` })}>5. Create New Person Fragment</button>
+        </div>
+        <div style={{ padding: 5 }}>
+          <button onClick={() => createNewPersonQuery()}>6. Create New Person Query</button>
+        </div>
+        <div style={{ padding: 5 }}>
+          <button onClick={() => evictOnePerson(1)}>7. Evict on person (id:1)</button>
         </div>
       </div>
     </main>
@@ -149,16 +166,20 @@ function IssueNotes() {
   return (
     <>
       <h3>Expected Behavior</h3>
-      TBD
+      null returned from client.readQuery if not results are available
       <h3>Actual Behavior</h3>
-      TBD
+      Exception is thrown from client.readQuery in some circumstances if results not available
       <h3>Reproduction Steps</h3>
       <ol>
-        <li>TBD.</li>
+        <li>Click button: '4. Fetch People from InMemory Cache', and note that no exception is thrown</li>
+        <li>Click button: '1. Run ONE_PERSON (id:1) Query (cache-first)', and note that, as expected, the person field has been initialized on ROOT-QUERY (but not people field) </li>
+        <li>Click button: '4. Fetch People from InMemory Cache' again, and observe error 'Can't find field people on ROOT_QUERY object'</li>
       </ol>
       <h3>Notes</h3>
       <p>
-        TBD
+        It is not clear if this is expected behaviour. However, I assume not,
+        as otherwise there seems to be not clear way to guard against missing fields on
+        ROOT_QUERY when working with InMemory cache directly (using client.readQuery and client.cache.readQuery)
       </p>
     </>
   );
