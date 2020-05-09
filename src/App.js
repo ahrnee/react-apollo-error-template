@@ -48,12 +48,19 @@ export default function App({ client }) {
 
   //
   const fetchPeopleFromClientCache = () => {
-    const peopleResult = client.readQuery({ query: ALL_PEOPLE });
-    if (peopleResult) {
-      const { people } = peopleResult;
-      console.log(people);
-      setPeople(people);
-      addCacheSnapshotToLog(`fetchPeopleFromClientCache`);
+    try {
+      const peopleResult = client.readQuery({ query: ALL_PEOPLE });
+      if (peopleResult) {
+        const { people } = peopleResult;
+        console.log(people);
+        setPeople(people);
+        addCacheSnapshotToLog(`fetchPeopleFromClientCache`);
+      }
+      console.log('fetchPeopleFromClientCache - completing query', peopleResult);
+    } catch (error) {
+      console.log(error);
+      console.log(typeof error);
+      console.log(error.constructor.name);
     }
   };
 
