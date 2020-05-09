@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { gql, useQuery } from "@apollo/client";
+import { gql, useQuery, defaultDataIdFromObject } from "@apollo/client";
 import { useCacheSnapshots } from "./helpers/useCacheSnapshots";
 import { IssueNotes } from "./components/IssueNotes";
 
@@ -47,10 +47,14 @@ export default function App({ client }) {
   }
 
   //
-  const updateNames = () => {
-    fetchPeople().then((people) => {
+  const updatePersonName = ({ id, name }) => {
+    console.log('writeFragment');
+    client.writeFragment({ fragment: PERSON_FRAGMENT, id: defaultDataIdFromObject({ __typename: 'Person', id }), data: { name } });
+  }
 
-    })
+  const updatePersonNameSilently = ({ id, name }) => {
+    console.log('writeFragment');
+    client.cache.writeFragment({ fragment: PERSON_FRAGMENT, id: defaultDataIdFromObject({ __typename: 'Person', id }), data: { name } });
   }
 
   //
@@ -73,9 +77,10 @@ export default function App({ client }) {
       },
     });
 
-    client.watchQuery({
+    const watchedQuery = client.watchQuery({
       query,
-    }).subscribe(next => console.log(`CLIENT WATCH QUERY CALLBACK - ALL_PEOPLE`, next));
+    })
+    watchedQuery.subscribe(next => console.log(`CLIENT WATCH QUERY CALLBACK - ALL_PEOPLE`, next, watchedQuery));
 
     console.log('Started Query Watch for Query', ALL_PEOPLE);
   }
@@ -105,7 +110,9 @@ export default function App({ client }) {
         <ul>
           {data.people.map(personItem => (
             <li key={personItem.id}>
-              {personItem.name} ( <span style={{ color: "blue" }}>Server Time: <b>{personItem.serverTime}</b></span> )
+              {personItem.name}
+              <button onClick={() => updatePersonName({ id: personItem.id, name: personItem.name + '-' })}>Person Name Update</button>
+              <button onClick={() => updatePersonNameSilently({ id: personItem.id, name: personItem.name + '-' })}>Person Name Silent Update</button>
             </li>
           ))}
         </ul>
