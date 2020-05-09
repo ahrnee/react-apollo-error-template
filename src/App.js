@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { gql, useQuery } from "@apollo/client";
 import { useCacheSnapshots } from "./helpers/useCacheSnapshots";
+import { IssueNotes } from "./components/IssueNotes";
 
 const PERSON_FRAGMENT = gql`
   fragment PersonFragment on Person {
@@ -46,6 +47,13 @@ export default function App({ client }) {
   }
 
   //
+  const updateNames = () => {
+    fetchPeople().then((people) => {
+
+    })
+  }
+
+  //
   const createNewPersonWithMissingFieldQuery = () => {
     fetchPeople().then((people) => {
       const newData = { people: [...people, { __typename: 'Person', id: `${nextUserIdRef.current}`, name: `New Person ${nextUserIdRef.current}` }] };
@@ -56,9 +64,25 @@ export default function App({ client }) {
     })
   }
 
+  const startQueryWatch = (query) => {
+    client.cache.watch({
+      query,
+      optimistic: false,
+      callback: (data) => {
+        console.log('CACHE WATCH QUERY CALLBACK - ALL_PEOPLE', data);
+      },
+    });
+
+    client.watchQuery({
+      query,
+    }).subscribe(next => console.log(`CLIENT WATCH QUERY CALLBACK - ALL_PEOPLE`, next));
+
+    console.log('Started Query Watch for Query', ALL_PEOPLE);
+  }
+
   return (
     <main>
-      <h1>Apollo Client Issue Reproduction</h1>
+      <h1>Notes</h1>
       <h2>
         Issue Notes (
         <a
@@ -97,36 +121,12 @@ export default function App({ client }) {
         <div style={{ padding: 5 }}>
           <button onClick={() => createNewPersonWithMissingFieldQuery()}>Create New Person (missing field)</button>
         </div>
+        <div style={{ padding: 5 }}>
+          <button onClick={() => startQueryWatch(ALL_PEOPLE)}>Start Query Watch - ALL_PEOPLE</button>
+        </div>
       </div>
     </main>
   );
 }
 
-function IssueNotes() {
-  return (
-    <>
-      <h3>Expected Behavior</h3>
-      If data missing from an object in query results:
-       <ul>
-        <li>The query continues to return the objects that have all the expected fields</li>
-        <li>An error or warning for the omitted objects with the missing fields</li>
-      </ul>
-      <h3>Actual Behavior</h3>
-      <ul>
-        <li>As soon as a results object has a missing field, the entire query stops updating</li>
-        <li>No error or warning seems to be available indicating the missing fields</li>
-      </ul>
-      < h3 > Reproduction Steps</h3 >
-      <ol>
-        <li>Click "Create New Person (all fields)" button - observe the results updating</li>
-        <li>Click "Create New Person (missing field)" button - observe the results do not update</li>
-        <li>Click "Create New Person (all fields)" button - observe the results no longer update</li>
-        <li>Click "Toggle Display" link - observe the cache continue to be updated with the results, even though the query not longer seems to update</li>
-      </ol>
-      <h3>Notes</h3>
-      <p>
-        Debugging queries that are not working due to to missing fields is the single most frequent (and time-consuming) issue I run into with AC3. Anything that can make that experience better would be a big help
-      </p>
-    </>
-  );
-}
+
