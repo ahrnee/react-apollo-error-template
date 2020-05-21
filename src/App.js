@@ -107,7 +107,7 @@ function IssueNotes() {
     <>
       <h3>Expected Behavior</h3>
       If data missing from an object in query results:
-       <ul>
+      <ul>
         <li>The query continues to return the objects that have all the expected fields</li>
         <li>An error or warning for the omitted objects with the missing fields</li>
       </ul>
@@ -119,14 +119,8 @@ function IssueNotes() {
       < h3 > Reproduction Steps</h3 >
       <ol>
         <li>Click "Create New Person (all fields)" button - observe the results updating</li>
-        <li>Click "Create New Person (missing field)" button - observe the results do not update</li>
-        <li>Click "Create New Person (all fields)" button - observe the results no longer update</li>
-        <li>Click "Toggle Display" link - observe the cache continue to be updated with the results, even though the query not longer seems to update</li>
+        <li>Click "Create New Person (missing field)" button - observe the previously added results disappearing, and not 'missing field' error message displaying in the console</li>
       </ol>
-      <h3>Notes</h3>
-      <p>
-        Debugging queries that are not working due to to missing fields is the single most frequent (and time-consuming) issue I run into with AC3. Anything that can make that experience better would be a big help
-      </p>
     </>
   );
 }
