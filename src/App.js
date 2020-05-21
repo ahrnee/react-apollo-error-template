@@ -47,16 +47,16 @@ export default function App({ client }) {
   }
 
   //
-  const updatePersonNameViaClient = ({ id, name }) => {
-    console.log('updatePersonNameViaClient', { id, name });
-    client.writeFragment({ fragment: PERSON_FRAGMENT, id: defaultDataIdFromObject({ __typename: 'Person', id }), data: { name } });
+  const updatePersonNameOnCache = ({ id, name }) => {
+    console.log('updatePersonNameOnCache', { id, name });
+    client.cache.writeFragment({ fragment: PERSON_FRAGMENT, id: defaultDataIdFromObject({ __typename: 'Person', id }), data: { name } });
     nextNamePostfixNumber.current++;
   }
 
   //
-  const updatePersonNameViaCache = ({ id, name }) => {
-    console.log('updatePersonNameViaCache', { id, name });
-    client.cache.writeFragment({ fragment: PERSON_FRAGMENT, id: defaultDataIdFromObject({ __typename: 'Person', id }), data: { name } });
+  const updatePersonNameOnCachNoBroadcast = ({ id, name }) => {
+    console.log('updatePersonNameOnCachNoBroadcast', { id, name });
+    client.cache.writeFragment({ fragment: PERSON_FRAGMENT, id: defaultDataIdFromObject({ __typename: 'Person', id }), data: { name }, broadcast: false });
     nextNamePostfixNumber.current++;
   }
 
@@ -102,8 +102,8 @@ export default function App({ client }) {
           {useQueryOriginatedData.people.map(personItem => (
             <li key={personItem.id}>
               {personItem.name}:
-              <button onClick={() => updatePersonNameViaClient({ id: personItem.id, name: personItem.name + ` ${nextNamePostfixNumber.current}` })}>Update name via ApolloClient</button>
-              <button onClick={() => updatePersonNameViaCache({ id: personItem.id, name: personItem.name + ` ${nextNamePostfixNumber.current}` })}>Update name via ApolloCache</button>
+              <button onClick={() => updatePersonNameOnCache({ id: personItem.id, name: personItem.name + ` ${nextNamePostfixNumber.current}` })}>Update name via cache</button>
+              <button onClick={() => updatePersonNameOnCachNoBroadcast({ id: personItem.id, name: personItem.name + ` ${nextNamePostfixNumber.current}` })}>Update name via cache (no broadcast)</button>
             </li>
           ))}
         </ul>
@@ -115,8 +115,8 @@ export default function App({ client }) {
           {watchQueryOriginatedData.people.map(personItem => (
             <li key={personItem.id}>
               {personItem.name}:
-              <button onClick={() => updatePersonNameViaClient({ id: personItem.id, name: personItem.name + ` ${nextNamePostfixNumber.current}` })}>Update name via ApolloClient</button>
-              <button onClick={() => updatePersonNameViaCache({ id: personItem.id, name: personItem.name + ` ${nextNamePostfixNumber.current}` })}>Update name via ApolloCache</button>
+              <button onClick={() => updatePersonNameOnCache({ id: personItem.id, name: personItem.name + ` ${nextNamePostfixNumber.current}` })}>Update name via cache</button>
+              <button onClick={() => updatePersonNameOnCachNoBroadcast({ id: personItem.id, name: personItem.name + ` ${nextNamePostfixNumber.current}` })}>Update name via cache (no broadcast)</button>
             </li>
           ))}
         </ul>
