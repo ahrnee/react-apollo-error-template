@@ -24,7 +24,6 @@ export default function App({ client }) {
   const [showIssueNotes, setShowIssueNotes] = useState(false);
   const { methods: { addCacheSnapshotToLog }, components: { SnapshotLogViewer } } = useCacheSnapshots({ client });
   const { loading, data: useQueryOriginatedData } = useQuery(ALL_PEOPLE);
-  const [watchQueryOriginatedData, setWatchQueryOriginatedData] = useState();
   const nextNamePostfixNumber = useRef();
   const nextUserIdRef = useRef();
 
@@ -49,48 +48,26 @@ export default function App({ client }) {
   const getUpdatedPersonName = (id) => {
     const personCacheId = defaultDataIdFromObject({ __typename: 'Person', id });
     const person = client.cache.readFragment({ fragment: PERSON_FRAGMENT, id: personCacheId });
-    return `${person.name} ${nextNamePostfixNumber.current}`;
+    const updatedName = `${person.name} ${nextNamePostfixNumber.current}`;
+
+    nextNamePostfixNumber.current++;
+
+    return updatedName;
   }
 
   //
   const updatePersonNameViaClient = ({ id }) => {
-    const name = getUpdatedPersonName(id);
-    console.log('updatePersonNameOnCache', { id, name });
-    client.writeFragment({ fragment: PERSON_FRAGMENT, id: defaultDataIdFromObject({ __typename: 'Person', id }), data: { name } });
+    client.writeFragment({ fragment: PERSON_FRAGMENT, id: defaultDataIdFromObject({ __typename: 'Person', id }), data: { name: getUpdatedPersonName(id) } });
     addCacheSnapshotToLog(`updatePersonNameOnCache`);
-    nextNamePostfixNumber.current++;
   }
 
   //
   const updatePersonNameViaCache = ({ id }) => {
-    const name = getUpdatedPersonName(id);
-    console.log('updatePersonNameOnCache', { id, name });
-    client.cache.writeFragment({ fragment: PERSON_FRAGMENT, id: defaultDataIdFromObject({ __typename: 'Person', id }), data: { name } });
+    client.cache.writeFragment({ fragment: PERSON_FRAGMENT, id: defaultDataIdFromObject({ __typename: 'Person', id }), data: { name: getUpdatedPersonName(id) } });
     addCacheSnapshotToLog(`updatePersonNameOnCache`);
-    nextNamePostfixNumber.current++;
-  }
-
-  //
-  const updatePersonNameViaCachNoBroadcast = ({ id }) => {
-    const name = getUpdatedPersonName(id);
-    console.log('updatePersonNameOnCachNoBroadcast', { id, name });
-    client.cache.writeFragment({ fragment: PERSON_FRAGMENT, id: defaultDataIdFromObject({ __typename: 'Person', id }), data: { name }, broadcast: false });
-    addCacheSnapshotToLog(`updatePersonNameOnCachNoBroadcast`);
-    nextNamePostfixNumber.current++;
-  }
-
-  //
-  const initQueryWatch = () => {
-    const watchedQuery = client.watchQuery({ query: ALL_PEOPLE });
-    watchedQuery.subscribe(next => {
-      setWatchQueryOriginatedData(next?.data);
-      console.log(`CLIENT WATCH QUERY CALLBACK - ALL_PEOPLE`, next)
-    });
-    console.log('Started Query Watch for Query', ALL_PEOPLE);
   }
 
   useEffect(() => {
-    initQueryWatch();
     nextNamePostfixNumber.current = 1;
     nextUserIdRef.current = 4;
   }, [])
@@ -121,23 +98,8 @@ export default function App({ client }) {
           {useQueryOriginatedData.people.map(personItem => (
             <li key={personItem.id}>
               {personItem.name}:
-              <button onClick={() => updatePersonNameViaClient({ id: personItem.id })}>Update name via client</button>
-              <button onClick={() => updatePersonNameViaCache({ id: personItem.id })}>Update name via cache</button>
-              <button onClick={() => updatePersonNameViaCachNoBroadcast({ id: personItem.id })}>Update name via cache (no broadcast)</button>
-            </li>
-          ))}
-        </ul>
-      )}
-
-      <h3>Users (watchQuery originated data)</h3>
-      {!watchQueryOriginatedData || !watchQueryOriginatedData.people ? (<p>No People Loaded</p>) : (
-        <ul>
-          {watchQueryOriginatedData.people.map(personItem => (
-            <li key={personItem.id}>
-              {personItem.name}:
-              <button onClick={() => updatePersonNameViaClient({ id: personItem.id })}>Update name via client</button>
-              <button onClick={() => updatePersonNameViaCache({ id: personItem.id })}>Update name via cache</button>
-              <button onClick={() => updatePersonNameViaCachNoBroadcast({ id: personItem.id })}>Update name via cache (no broadcast)</button>
+              <button onClick={() => updatePersonNameViaClient({ id: personItem.id })}>Client Update</button>
+              <button onClick={() => updatePersonNameViaCache({ id: personItem.id })}>Cache Update</button>
             </li>
           ))}
         </ul>
@@ -148,7 +110,7 @@ export default function App({ client }) {
       <h3>Actions</h3>
       <div>
         <div style={{ padding: 5 }}>
-          <button onClick={() => createNewPersonQuery()}>Create New Person (all fields)</button>
+          <button onClick={() => createNewPersonQuery()}>Create New Person</button>
         </div>
       </div>
     </main>
