@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useRef } from "react";
-import { gql, useQuery, defaultDataIdFromObject } from "@apollo/client";
-import { useCacheSnapshots } from "./helpers/useCacheSnapshots";
+import { gql, useQuery } from "@apollo/client";
+import React, { useEffect, useRef, useState } from "react";
 import { IssueNotes } from "./components/IssueNotes";
+import { useCacheSnapshots } from "./helpers/useCacheSnapshots";
 
 const PERSON_FRAGMENT = gql`
   fragment PersonFragment on Person {
@@ -45,28 +45,6 @@ export default function App({ client }) {
     })
   }
 
-  const getUpdatedPersonName = (id) => {
-    const personCacheId = defaultDataIdFromObject({ __typename: 'Person', id });
-    const person = client.cache.readFragment({ fragment: PERSON_FRAGMENT, id: personCacheId });
-    const updatedName = `${person.name} ${nextNamePostfixNumber.current}`;
-
-    nextNamePostfixNumber.current++;
-
-    return updatedName;
-  }
-
-  //
-  const updatePersonNameViaClient = ({ id }) => {
-    client.writeFragment({ fragment: PERSON_FRAGMENT, id: defaultDataIdFromObject({ __typename: 'Person', id }), data: { name: getUpdatedPersonName(id) } });
-    addCacheSnapshotToLog(`updatePersonNameOnCache`);
-  }
-
-  //
-  const updatePersonNameViaCache = ({ id }) => {
-    client.cache.writeFragment({ fragment: PERSON_FRAGMENT, id: defaultDataIdFromObject({ __typename: 'Person', id }), data: { name: getUpdatedPersonName(id) } });
-    addCacheSnapshotToLog(`updatePersonNameOnCache`);
-  }
-
   useEffect(() => {
     nextNamePostfixNumber.current = 1;
     nextUserIdRef.current = 4;
@@ -97,9 +75,7 @@ export default function App({ client }) {
         <ul>
           {useQueryOriginatedData.people.map(personItem => (
             <li key={personItem.id}>
-              {personItem.name}:
-              <button onClick={() => updatePersonNameViaClient({ id: personItem.id })}>Client Update</button>
-              <button onClick={() => updatePersonNameViaCache({ id: personItem.id })}>Cache Update</button>
+              {personItem.name}
             </li>
           ))}
         </ul>
